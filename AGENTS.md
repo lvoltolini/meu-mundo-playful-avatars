@@ -28,3 +28,7 @@ use the editor.
   own key and store it in Secrets.
 - **Secrets.** Lovable manages them. Do not put secret values in the repo.
 <!-- LOVABLE:END -->
+
+## Project rules
+- Games are standalone HTML in public/games, run in a sandboxed iframe; they get config via postMessage {type:'config'} and report {type:'event'} through public/games/_bridge.js. Why: lets uploaded HTML games use the same avatar/emoji protocol.
+- Nothing is persisted; config and history live in React state and export as JSON. Why: prototype requirement.

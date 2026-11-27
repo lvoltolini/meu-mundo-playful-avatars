@@ -1,0 +1,44 @@
+<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><title>Show de Perguntas</title>
+<style>
+*{box-sizing:border-box}body{margin:0;font-family:"Atkinson Hyperlegible",system-ui,sans-serif;background:#f6f3ec;color:#253041;height:100vh;display:grid;grid-template-columns:1fr 1.3fr 1fr;gap:16px;padding:16px}
+.side{background:#fff;border-radius:16px;padding:16px;display:flex;flex-direction:column;gap:10px;border:3px solid transparent}
+.p0{border-color:#3b82a6}.p1{border-color:#c2703d}.av{width:80px;height:80px;border-radius:50%;margin:0 auto;display:flex;align-items:center;justify-content:center;font-size:52px;overflow:hidden;background:#eef2f5}
+.av img{width:100%;height:100%;object-fit:cover}.nm{text-align:center;font-weight:700;font-size:18px}.sc{text-align:center;font-size:28px;font-weight:700}
+button{font:inherit;font-size:16px;padding:12px;border-radius:12px;border:2px solid #d5dbe2;background:#fafbfc;cursor:pointer;text-align:left}
+button:hover:not(:disabled){background:#eef4f8}button:disabled{opacity:.45;cursor:default}button.ok{background:#d8efe3;border-color:#5aa77d;opacity:1}
+.mid{display:flex;flex-direction:column;justify-content:center;align-items:center;text-align:center;gap:14px}
+.cat{font-size:14px;text-transform:uppercase;letter-spacing:.1em;color:#6b7686}.q{font-size:26px;font-weight:700}.msg{min-height:28px;font-size:18px}
+.next{background:#253041;color:#fff;border:none;text-align:center;padding:12px 24px}.hint{font-size:13px;color:#6b7686}
+</style></head><body>
+<div class="side p0" id="s0"></div>
+<div class="mid"><div class="cat" id="cat"></div><div class="q" id="q"></div><div class="msg" id="msg"></div><button class="next" id="next" style="display:none">Próxima pergunta</button><div class="hint">Jogador da esquerda: teclas 1 2 3 4 · Jogador da direita: teclas 7 8 9 0 · ou clique</div></div>
+<div class="side p1" id="s1"></div>
+<script src="_bridge.js"></script><script>
+const Q=[
+["Animais","Qual animal é conhecido por ter uma tromba?",["Girafa","Elefante","Cavalo","Coelho"],1,100],
+["Cores","Misturando azul e amarelo, qual cor obtemos?",["Roxo","Laranja","Verde","Rosa"],2,100],
+["Números","Quanto é 7 + 5?",["11","12","13","14"],1,200],
+["Natureza","O que as plantas precisam para fazer fotossíntese?",["Luz do sol","Areia","Sal","Plástico"],0,200],
+["Espaço","Qual é o planeta onde vivemos?",["Marte","Júpiter","Terra","Vênus"],2,300],
+["Corpo","Quantos dedos temos em uma mão?",["Quatro","Seis","Cinco","Três"],2,100],
+["Geografia","Qual é o maior oceano do mundo?",["Atlântico","Índico","Pacífico","Ártico"],2,300],
+["Música","Qual destes é um instrumento de cordas?",["Violão","Tambor","Flauta","Trompete"],0,200]];
+let i=0,sc=[0,0],lock=[false,false],done=false;
+const $=id=>document.getElementById(id);
+function side(p){const P=CFG.players[p];const el=$('s'+p);const o=Q[i]?Q[i][2]:[];const k=p===0?['1','2','3','4']:['7','8','9','0'];
+ el.innerHTML='<div class="av">'+(P.avatar?'<img alt="" src="'+P.avatar+'">':P.emoji)+'</div><div class="nm"></div><div class="sc">'+sc[p]+'</div>'+
+ o.map((t,j)=>'<button data-j="'+j+'"'+(lock[p]||done?' disabled':'')+(done&&j===Q[i][3]?' class="ok"':'')+'>'+k[j]+') '+t+'</button>').join('');
+ el.querySelector('.nm').textContent=P.name;el.querySelectorAll('button').forEach(b=>b.onclick=()=>answer(p,+b.dataset.j));}
+function render(){if(i>=Q.length){$('cat').textContent='Fim do jogo';const w=sc[0]===sc[1]?'Empate!':(sc[0]>sc[1]?CFG.players[0].name:CFG.players[1].name)+' venceu! 🎉';
+ $('q').textContent=w;$('msg').textContent=sc[0]+' x '+sc[1];$('next').style.display='';$('next').textContent='Jogar de novo';side(0);side(1);return;}
+ $('cat').textContent=Q[i][0]+' · '+Q[i][4]+' pontos';$('q').textContent=Q[i][1];side(0);side(1);}
+function answer(p,j){if(done||lock[p]||i>=Q.length)return;const P=CFG.players[p];
+ if(j===Q[i][3]){sc[p]+=Q[i][4];done=true;$('msg').textContent=P.name+' acertou! +'+Q[i][4];sendEvent('acerto',{jogo:'Perguntas',jogador:P.name,pergunta:Q[i][1],pontos:sc[p]});$('next').style.display='';}
+ else{lock[p]=true;$('msg').textContent=P.name+' errou. Tente de novo, outro jogador!';sendEvent('erro',{jogo:'Perguntas',jogador:P.name,pergunta:Q[i][1]});
+  if(lock[0]&&lock[1]){done=true;$('msg').textContent='Ninguém acertou. A resposta era: '+Q[i][2][Q[i][3]];$('next').style.display='';}}
+ render();}
+$('next').onclick=()=>{if(i>=Q.length){i=0;sc=[0,0];}else i++;
+ if(i>=Q.length)sendEvent('fim',{jogo:'Perguntas',placar:sc.join(' x ')});lock=[false,false];done=false;$('msg').textContent='';$('next').style.display='none';render();};
+addEventListener('keydown',e=>{const a=['1','2','3','4'].indexOf(e.key),b=['7','8','9','0'].indexOf(e.key);if(a>=0)answer(0,a);if(b>=0)answer(1,b);if(e.key==='Enter'&&$('next').style.display==='')$('next').click();});
+window.onConfig=render;render();
+</script></body></html>
