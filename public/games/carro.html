@@ -1,0 +1,57 @@
+<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><title>Estrada de Carro</title>
+<style>html,body{margin:0;height:100%;background:#222;overflow:hidden}canvas{width:100vw;height:100vh;object-fit:contain;display:block;touch-action:none}</style>
+</head><body><canvas id="c" width="800" height="600" tabindex="0"></canvas>
+<script src="_bridge.js"></script><script>
+const c=document.getElementById('c'),x=c.getContext('2d'),W=800,H=600,keys={};
+const RX=200,RW=400,LANES=[RX+67,RX+200,RX+333],GOALS=[0,500,1000,2000];
+let s,goalIdx=0,touchX=null;
+function reset(){s={lane:1,px:LANES[1],speed:0,dist:0,others:[],deco:[],t:0,started:false,over:false,win:false,goal:CFG.drive.goal||0};}
+reset();
+function goal(){return s.goal||0;}
+function start(){if(s.over||!s.started){const g=s.goal;reset();s.goal=g;s.started=true;sendEvent('inicio',{jogo:'Carro',meta:g||'sem meta'});}}
+function end(win){s.over=true;s.win=win;sendEvent('fim',{jogo:'Carro',jogador:CFG.players[0].name,metros:Math.floor(s.dist),meta:goal()||'sem meta',venceu:win});}
+onConfig=()=>{if(!s.started)s.goal=CFG.drive.goal||0;};
+addEventListener('keydown',e=>{keys[e.code]=true;
+ if(e.code==='Space'||e.code==='Enter'){e.preventDefault();start();}
+ if(!s.started||s.over){if(e.code==='KeyG'){goalIdx=(GOALS.indexOf(s.goal)+1)%GOALS.length;s.goal=GOALS[goalIdx];}}
+ if(s.started&&!s.over){if(e.code==='ArrowLeft'||e.code==='KeyA')s.lane=Math.max(0,s.lane-1);if(e.code==='ArrowRight'||e.code==='KeyD')s.lane=Math.min(2,s.lane+1);}
+});
+addEventListener('keyup',e=>keys[e.code]=false);
+c.addEventListener('pointerdown',e=>{c.focus();const p=toCanvas(c,e);
+ if(!s.started||s.over){if(p.y>440){goalIdx=(GOALS.indexOf(s.goal)+1)%GOALS.length;s.goal=GOALS[goalIdx];}else start();return;}
+ s.lane=p.x<s.px-30?Math.max(0,s.lane-1):p.x>s.px+30?Math.min(2,s.lane+1):s.lane;});
+function step(){
+ if(!s.started||s.over)return;
+ s.t++;s.speed=Math.min(14,s.speed+0.08);s.dist+=s.speed/6;
+ s.px+=(LANES[s.lane]-s.px)*0.2;
+ if(s.t%55===0){s.others.push({lane:Math.floor(Math.random()*3),y:-60,v:3+Math.random()*3});}
+ if(s.t%25===0){const side=Math.random()<.5?-1:1;s.deco.push({x:side<0?20+Math.random()*130:650+Math.random()*130,y:-40,h:Math.random()<.5});}
+ s.others.forEach(o=>o.y+=s.speed-o.v);s.others=s.others.filter(o=>o.y<H+80&&o.y>-300);
+ s.deco.forEach(d=>d.y+=s.speed);s.deco=s.deco.filter(d=>d.y<H+60);
+ for(const o of s.others){if(Math.abs(LANES[o.lane]-s.px)<50&&Math.abs(o.y-500)<70){s.speed=Math.max(2,s.speed*0.4);o.y-=90;sendEvent('batida',{metros:Math.floor(s.dist)});}}
+ if(goal()&&s.dist>=goal())end(true);
+}
+function draw(){
+ const D=CFG.drive;
+ x.fillStyle=D.grass;x.fillRect(0,0,W,H);
+ x.fillStyle=D.road;x.fillRect(RX,0,RW,H);
+ x.fillStyle='#fff';x.fillRect(RX-6,0,6,H);x.fillRect(RX+RW,0,6,H);
+ const off=(s.dist*6)%80;
+ for(const lx of [RX+133,RX+267])for(let y=-80;y<H;y+=80)x.fillRect(lx-3,y+off,6,40);
+ s.deco.forEach(d=>drawEmoji(x,d.h?D.houses:D.objects,d.x,d.y,d.h?70:50));
+ s.others.forEach(o=>drawEmoji(x,D.others,LANES[o.lane],o.y,64));
+ drawEmoji(x,D.car,s.px,500,76);drawAvatar(x,0,s.px,495,30);
+ x.fillStyle='rgba(0,0,0,.55)';x.fillRect(0,0,W,34);x.fillStyle='#fff';x.font='18px sans-serif';x.textAlign='left';
+ x.fillText('Distância: '+Math.floor(s.dist)+' m'+(goal()?' / '+goal()+' m':''),12,23);
+ x.textAlign='right';x.fillText('Motorista: '+CFG.players[0].name+'  ·  '+Math.round(s.speed*8)+' km/h',W-12,23);
+ if(!s.started||s.over){x.fillStyle='rgba(0,0,0,.75)';x.fillRect(150,170,500,310);x.fillStyle='#fff';x.textAlign='center';
+  x.font='28px sans-serif';x.fillText(!s.started?'Estrada de Carro':(s.win?'Meta alcançada! 🎉':'Parou em '+Math.floor(s.dist)+' m'),400,225);
+  x.font='18px sans-serif';x.fillText('← → (ou toque nos lados) para trocar de faixa',400,265);
+  x.fillText('Meta: '+(goal()?goal()+' metros':'sem meta (vá até onde quiser)'),400,325);
+  x.fillText('Toque aqui embaixo ou aperte G para mudar a meta',400,360);
+  x.fillText('Aperte Espaço / toque em cima para '+(s.over?'dirigir de novo':'começar'),400,410);}
+ else if(!goal()){x.fillStyle='rgba(0,0,0,.55)';x.fillRect(W-150,44,140,30);x.fillStyle='#fff';x.textAlign='center';x.font='15px sans-serif';x.fillText('Sem meta · Esc: parar',W-80,64);}
+}
+addEventListener('keydown',e=>{if(e.code==='Escape'&&s.started&&!s.over)end(false);});
+(function loop(){step();draw();requestAnimationFrame(loop);})();c.focus();
+</script></body></html>

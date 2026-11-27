@@ -1,10 +1,12 @@
 export type Player = { name: string; avatar: string | null; emoji: string };
+export type DriveConfig = { car: string; others: string; houses: string; objects: string; road: string; grass: string; goal: number };
 export type GameConfig = {
   players: [Player, Player];
   vehicle: string;
   enemy: string;
   ball: string;
   racket: string;
+  drive: DriveConfig;
 };
 export type Game = { id: string; name: string; description: string; src?: string; srcDoc?: string };
 export type HistoryEntry = { hora: string; jogo: string; evento: string; dados: Record<string, unknown> };
@@ -18,11 +20,13 @@ export const defaultConfig: GameConfig = {
   enemy: "👾",
   ball: "🎾",
   racket: "🏓",
+  drive: { car: "🚗", others: "🚙", houses: "🏠", objects: "🌳", road: "#4b5563", grass: "#6bbf59", goal: 0 },
 };
 
 export const builtInGames: Game[] = [
   { id: "perguntas", name: "Show de Perguntas", description: "2 jogadores · quem acertar primeiro ganha", src: "/games/perguntas.html" },
   { id: "invasores", name: "Invasores do Espaço", description: "1 jogador · pilote sua nave", src: "/games/invasores.html" },
+  { id: "carro", name: "Estrada de Carro", description: "1 jogador · dirija até onde quiser", src: "/games/carro.html" },
   { id: "tenis", name: "Tênis para 2", description: "2 jogadores · rebata a bola", src: "/games/tenis.html" },
 ];
 
@@ -31,6 +35,9 @@ export const emojiChoices = {
   enemy: ["👾", "🌳", "🌸", "⭐", "🍎", "🎈", "☁️", "🐟"],
   ball: ["🎾", "⚽", "🏀", "🍊", "🌕", "🍩", "⚪", "🫧"],
   racket: ["🏓", "🏸", "🪵", "🧹", "🥄", "🌿"],
+  car: ["🚗", "🚕", "🚓", "🏎️", "🚌", "🚜", "🛻", "🚑"],
+  houses: ["🏠", "🏡", "🏢", "🏰", "⛺", "🏫"],
+  objects: ["🌳", "🌲", "🌸", "🪨", "🐄", "⛲", "🌵", "🎈"],
   player: ["🙂", "😎", "🐱", "🐶", "🦊", "🐼", "🤖", "🦖"],
 };
 
