@@ -29,3 +29,9 @@ window.drawAvatar = (ctx, i, x, y, size) => {
   else { ctx.restore(); ctx.save(); drawEmoji(ctx, (CFG.players[i] || {}).emoji || "🙂", x, y + 2, size * 0.75); }
   ctx.restore();
 };
+// Converte toque/mouse para coordenadas do canvas (canvas com object-fit: contain).
+window.toCanvas = (c, e) => {
+  const r = c.getBoundingClientRect(), s = Math.min(r.width / c.width, r.height / c.height);
+  const ox = (r.width - c.width * s) / 2, oy = (r.height - c.height * s) / 2;
+  return { x: (e.clientX - r.left - ox) / s, y: (e.clientY - r.top - oy) / s };
+};

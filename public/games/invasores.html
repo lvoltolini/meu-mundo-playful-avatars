@@ -1,5 +1,5 @@
 <!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><title>Invasores do Espaço</title>
-<style>html,body{margin:0;height:100%;background:#1f2a3a;overflow:hidden}canvas{width:100vw;height:100vh;object-fit:contain;display:block}</style>
+<style>html,body{margin:0;height:100%;background:#1f2a3a;overflow:hidden}canvas{width:100vw;height:100vh;object-fit:contain;display:block;touch-action:none}</style>
 </head><body><canvas id="c" width="800" height="600" tabindex="0"></canvas>
 <script src="_bridge.js"></script><script>
 const c=document.getElementById('c'),x=c.getContext('2d'),W=800,H=600,keys={};let s;
@@ -8,12 +8,16 @@ function reset(){s={px:400,b:[],e:[],eb:[],dir:1,score:0,lives:3,over:false,win:
 reset();
 addEventListener('keydown',e=>{keys[e.code]=true;if(e.code==='Space'){e.preventDefault();if(!s.started||s.over){if(s.over)reset();s.started=true;sendEvent('inicio',{jogo:'Invasores'});}}});
 addEventListener('keyup',e=>keys[e.code]=false);
-c.addEventListener('click',()=>c.focus());
+let drag=null;
+function start(){if(!s.started||s.over){if(s.over)reset();s.started=true;sendEvent('inicio',{jogo:'Invasores'});}}
+c.addEventListener('pointerdown',e=>{c.focus();c.setPointerCapture(e.pointerId);if(!s.started||s.over){start();return;}drag=e.pointerId;s.px=toCanvas(c,e).x;});
+c.addEventListener('pointermove',e=>{if(drag===e.pointerId)s.px=toCanvas(c,e).x;});
+['pointerup','pointercancel'].forEach(t=>c.addEventListener(t,e=>{if(drag===e.pointerId)drag=null;}));
 function end(win){s.over=true;s.win=win;sendEvent('fim',{jogo:'Invasores',jogador:CFG.players[0].name,pontos:s.score,venceu:win});}
 function step(){
  if(!s.started||s.over)return;
  if(keys.ArrowLeft||keys.KeyA)s.px-=6; if(keys.ArrowRight||keys.KeyD)s.px+=6; s.px=Math.max(30,Math.min(W-30,s.px));
- s.cd--; if(keys.Space&&s.cd<=0){s.b.push({x:s.px,y:510});s.cd=18;}
+ s.cd--; if((keys.Space||drag!==null)&&s.cd<=0){s.b.push({x:s.px,y:510});s.cd=18;}
  s.b.forEach(b=>b.y-=9); s.b=s.b.filter(b=>b.y>0);
  const alive=s.e.filter(e=>e.a); const sp=0.6+(32-alive.length)*0.05;
  let edge=alive.some(e=>(e.x>W-30&&s.dir>0)||(e.x<30&&s.dir<0));
@@ -36,7 +40,7 @@ function draw(){
  x.textAlign='right';x.fillText('Vidas: '+s.lives+'   Piloto: '+CFG.players[0].name,W-16,24);
  if(!s.started||s.over){x.fillStyle='rgba(31,42,58,.85)';x.fillRect(150,220,500,160);x.fillStyle='#fff';x.textAlign='center';
   x.font='28px sans-serif';x.fillText(!s.started?'Invasores do Espaço':(s.win?'Você conseguiu! 🎉':'Fim de jogo'),400,270);
-  x.font='18px sans-serif';x.fillText('← → para mover, Espaço para atirar',400,310);x.fillText('Pressione Espaço para '+(s.over?'jogar de novo':'começar'),400,345);}
+  x.font='18px sans-serif';x.fillText('Arraste a nave (ou ← →). Atira sozinho ao arrastar',400,310);x.fillText('Toque ou aperte Espaço para '+(s.over?'jogar de novo':'começar'),400,345);}
 }
 (function loop(){step();draw();requestAnimationFrame(loop);})();c.focus();
 </script></body></html>

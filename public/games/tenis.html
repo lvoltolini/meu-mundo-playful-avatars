@@ -1,5 +1,5 @@
 <!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><title>Tênis para 2</title>
-<style>html,body{margin:0;height:100%;background:#2f5d50;overflow:hidden}canvas{width:100vw;height:100vh;object-fit:contain;display:block}</style>
+<style>html,body{margin:0;height:100%;background:#2f5d50;overflow:hidden}canvas{width:100vw;height:100vh;object-fit:contain;display:block;touch-action:none}</style>
 </head><body><canvas id="c" width="800" height="600" tabindex="0"></canvas>
 <script src="_bridge.js"></script><script>
 const c=document.getElementById('c'),x=c.getContext('2d'),W=800,H=600,PH=120,keys={},WIN=5;let s;
@@ -7,7 +7,11 @@ function reset(){s={p:[H/2,H/2],sc:[0,0],bx:W/2,by:H/2,vx:4,vy:2,started:false,o
 function serve(d){s.bx=W/2;s.by=H/2;s.vx=4*d;s.vy=(Math.random()*4-2);}
 reset();
 addEventListener('keydown',e=>{keys[e.code]=true;if(e.code==='Space'){e.preventDefault();if(!s.started||s.over){if(s.over)reset();s.started=true;sendEvent('inicio',{jogo:'Tênis'});}}if(e.code.startsWith('Arrow'))e.preventDefault();});
-addEventListener('keyup',e=>keys[e.code]=false);c.addEventListener('click',()=>c.focus());
+addEventListener('keyup',e=>keys[e.code]=false);const drags={};
+c.addEventListener('pointerdown',e=>{c.focus();c.setPointerCapture(e.pointerId);if(!s.started||s.over){if(s.over)reset();s.started=true;sendEvent('inicio',{jogo:'Tênis'});return;}
+ const p=toCanvas(c,e);drags[e.pointerId]=p.x<W/2?0:1;s.p[drags[e.pointerId]]=p.y;});
+c.addEventListener('pointermove',e=>{const i=drags[e.pointerId];if(i!==undefined)s.p[i]=toCanvas(c,e).y;});
+['pointerup','pointercancel'].forEach(t=>c.addEventListener(t,e=>{delete drags[e.pointerId];}));
 function point(i){s.sc[i]++;sendEvent('ponto',{jogo:'Tênis',jogador:CFG.players[i].name,placar:s.sc.join(' x ')});
  if(s.sc[i]>=WIN){s.over=true;sendEvent('fim',{jogo:'Tênis',vencedor:CFG.players[i].name,placar:s.sc.join(' x ')});}else serve(i===0?1:-1);}
 function step(){if(!s.started||s.over)return;
@@ -24,6 +28,6 @@ function draw(){x.fillStyle='#2f5d50';x.fillRect(0,0,W,H);x.strokeStyle='rgba(25
  x.fillStyle='#fff';x.font='22px sans-serif';x.textAlign='center';x.fillText(CFG.players[0].name+'  '+s.sc[0]+'  x  '+s.sc[1]+'  '+CFG.players[1].name,W/2,30);
  if(!s.started||s.over){x.fillStyle='rgba(20,40,34,.85)';x.fillRect(150,210,500,180);x.fillStyle='#fff';x.font='28px sans-serif';
   x.fillText(s.over?(s.sc[0]>s.sc[1]?CFG.players[0].name:CFG.players[1].name)+' venceu! 🎉':'Tênis para 2 jogadores',400,260);
-  x.font='18px sans-serif';x.fillText('Esquerda: W / S     Direita: ↑ / ↓',400,300);x.fillText('Quem fizer '+WIN+' pontos vence',400,330);x.fillText('Pressione Espaço para '+(s.over?'jogar de novo':'começar'),400,362);}}
+  x.font='18px sans-serif';x.fillText('Arraste no seu lado da tela (ou W/S e ↑/↓)',400,300);x.fillText('Quem fizer '+WIN+' pontos vence',400,330);x.fillText('Toque ou aperte Espaço para '+(s.over?'jogar de novo':'começar'),400,362);}}
 (function loop(){step();draw();requestAnimationFrame(loop);})();c.focus();
 </script></body></html>
