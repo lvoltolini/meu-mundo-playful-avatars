@@ -83,7 +83,8 @@ function Jogar() {
     Array.from(e.target.files ?? []).forEach((f) => {
       f.text().then((html) => {
         const id = `up-${Date.now()}-${f.name}`;
-        setGames((g) => [...g, { id, name: f.name.replace(/\.html?$/i, ""), description: "Jogo enviado", srcDoc: prepareUploadedHtml(html, window.location.origin) }]);
+        const appBase = `${window.location.origin}${import.meta.env.BASE_URL}`.replace(/\/$/, "");
+        setGames((g) => [...g, { id, name: f.name.replace(/\.html?$/i, ""), description: "Jogo enviado", srcDoc: prepareUploadedHtml(html, appBase) }]);
         setCurrentId(id);
       });
     });
@@ -201,7 +202,7 @@ function Jogar() {
           ref={frame}
           title={current.name}
           sandbox="allow-scripts"
-          {...(current.srcDoc ? { srcDoc: current.srcDoc } : { src: current.src })}
+          {...(current.srcDoc ? { srcDoc: current.srcDoc } : { src: `${import.meta.env.BASE_URL}${current.src?.replace(/^\//, "")}` })}
           onLoad={() => { post(); frame.current?.focus(); }}
           className="w-full flex-1 bg-background"
         />

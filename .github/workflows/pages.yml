@@ -1,4 +1,4 @@
-name: Deploy games to GitHub Pages
+name: Deploy app to GitHub Pages
 on:
   push:
     branches: [main]
@@ -18,9 +18,19 @@ jobs:
       url: ${{ steps.deployment.outputs.page_url }}
     steps:
       - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
       - uses: actions/configure-pages@v5
+      - run: bun install --frozen-lockfile
+      - run: bun run build
+      - name: Prepare static site
+        run: |
+          test -f .output/public/_shell.html
+          cp .output/public/_shell.html .output/public/404.html
+          touch .output/public/.nojekyll
       - uses: actions/upload-pages-artifact@v3
         with:
-          path: public/games
+          path: .output/public
       - id: deployment
         uses: actions/deploy-pages@v4
