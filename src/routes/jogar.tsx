@@ -68,6 +68,8 @@ function Jogar() {
       return { ...c, players };
     });
 
+  const setDrive = (d: Partial<GameConfig["drive"]>) => setConfig((c) => ({ ...c, drive: { ...c.drive, ...d } }));
+
   const uploadAvatar = (i: 0 | 1) => (e: ChangeEvent<HTMLInputElement>) => {
     const f = e.target.files?.[0];
     if (!f) return;
@@ -98,7 +100,7 @@ function Jogar() {
   };
 
   return (
-    <main className="grid gap-4 p-4 lg:h-[calc(100vh-4rem)] lg:grid-cols-[320px_minmax(0,1fr)]">
+    <main className="grid gap-4 p-4 lg:h-[calc(100vh-4rem)] lg:grid-cols-[320px_minmax(0,1fr)] lg:overflow-hidden">
       <aside className="space-y-4 overflow-y-auto lg:pr-1">
         <section className="rounded-2xl border bg-card p-4">
           <h2 className="mb-2 font-bold">Jogos</h2>
@@ -143,6 +145,27 @@ function Jogar() {
           );
         })}
 
+        {current.id === "carro" ? (
+          <section className="rounded-2xl border bg-card p-4">
+            <h2 className="mb-1 font-bold">Estrada</h2>
+            <div className="space-y-3">
+              {([["car", "Meu carro", emojiChoices.car], ["others", "Outros carros", emojiChoices.car], ["houses", "Casas", emojiChoices.houses], ["objects", "Objetos fora da estrada", emojiChoices.objects]] as const).map(([k, label, opts]) => (
+                <div key={k}>
+                  <div className="mb-1 text-sm font-semibold">{label}</div>
+                  <EmojiPicker label={label} value={config.drive[k]} options={[...opts]} onChange={(v) => setDrive({ [k]: v })} />
+                </div>
+              ))}
+              <div className="flex gap-4 text-sm font-semibold">
+                <label className="flex items-center gap-2">Estrada <input type="color" value={config.drive.road} onChange={(e) => setDrive({ road: e.target.value })} /></label>
+                <label className="flex items-center gap-2">Grama <input type="color" value={config.drive.grass} onChange={(e) => setDrive({ grass: e.target.value })} /></label>
+              </div>
+              <label className="block text-sm font-semibold">Meta (metros, 0 = sem meta)
+                <input type="number" min={0} step={100} value={config.drive.goal} onChange={(e) => setDrive({ goal: Math.max(0, Number(e.target.value) || 0) })}
+                  className="mt-1 w-full rounded-lg border bg-background px-3 py-2" />
+              </label>
+            </div>
+          </section>
+        ) : (
         <section className="rounded-2xl border bg-card p-4">
           <h2 className="mb-1 font-bold">Objetos do jogo</h2>
           <p className="mb-3 text-sm text-muted-foreground">Troque por qualquer coisa que você quiser.</p>
@@ -155,6 +178,7 @@ function Jogar() {
             ))}
           </div>
         </section>
+        )}
 
         <section className="rounded-2xl border bg-card p-4">
           <div className="flex items-center justify-between gap-2">

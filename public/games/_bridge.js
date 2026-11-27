@@ -3,6 +3,7 @@
 window.CFG = {
   players: [{ name: "Jogador 1", avatar: null, emoji: "🙂" }, { name: "Jogador 2", avatar: null, emoji: "😎" }],
   vehicle: "🚀", enemy: "👾", ball: "🎾", racket: "🏓",
+  drive: { car: "🚗", others: "🚙", houses: "🏠", objects: "🌳", road: "#4b5563", grass: "#6bbf59", goal: 0 },
 };
 window.onConfig = null;
 const _imgs = {};
@@ -21,13 +22,14 @@ window.drawEmoji = (ctx, emoji, x, y, size) => {
   ctx.font = size + 'px "Apple Color Emoji","Segoe UI Emoji","Noto Color Emoji",sans-serif';
   ctx.textAlign = "center"; ctx.textBaseline = "middle"; ctx.fillText(emoji, x, y);
 };
+// Foto enviada: aparece dentro de uma moldura circular. Emoji escolhido: aparece inteiro (corpo), sem moldura.
 window.drawAvatar = (ctx, i, x, y, size) => {
-  const im = _imgs[i];
-  ctx.save(); ctx.beginPath(); ctx.arc(x, y, size / 2, 0, Math.PI * 2);
-  ctx.fillStyle = "#fff"; ctx.fill(); ctx.lineWidth = 3; ctx.strokeStyle = i === 0 ? "#3b82a6" : "#c2703d"; ctx.stroke(); ctx.clip();
-  if (im && im.complete && im.naturalWidth) ctx.drawImage(im, x - size / 2, y - size / 2, size, size);
-  else { ctx.restore(); ctx.save(); drawEmoji(ctx, (CFG.players[i] || {}).emoji || "🙂", x, y + 2, size * 0.75); }
-  ctx.restore();
+  const im = _imgs[i], p = CFG.players[i] || {};
+  if (im && im.complete && im.naturalWidth) {
+    ctx.save(); ctx.beginPath(); ctx.arc(x, y, size / 2, 0, Math.PI * 2);
+    ctx.fillStyle = "#fff"; ctx.fill(); ctx.lineWidth = 3; ctx.strokeStyle = i === 0 ? "#3b82a6" : "#c2703d"; ctx.stroke(); ctx.clip();
+    ctx.drawImage(im, x - size / 2, y - size / 2, size, size); ctx.restore();
+  } else drawEmoji(ctx, p.emoji || "🙂", x, y, size * 1.1);
 };
 // Converte toque/mouse para coordenadas do canvas (canvas com object-fit: contain).
 window.toCanvas = (c, e) => {
